@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auto-import CRM MVP</title>
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">CRM</span>
+      <div>
+        <strong>Auto-import CRM</strong>
+        <small>MVP lokaal</small>
+      </div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="backup-box">
+      <small>Opslag: LocalStorage</small>
+      <button id="seedBtn" type="button">Demo data</button>
+      <button id="exportBtn" type="button">JSON export</button>
+      <label class="import-label">JSON import<input id="importFile" type="file" accept="application/json"></label>
+    </div>
+  </aside>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <button id="menuBtn" class="ghost mobile-only" type="button">☰</button>
+      <input id="globalSearch" type="search" placeholder="Zoek klant, dossier, voertuig, taak...">
+      <button id="quickNew" type="button">+ Nieuw</button>
+    </header>
+    <section id="view"></section>
+  </main>
+
+  <dialog id="recordDialog">
+    <form id="recordForm" method="dialog">
+      <header class="dialog-header">
+        <h2 id="dialogTitle">Record</h2>
+        <button class="ghost" value="cancel" type="submit">✕</button>
+      </header>
+      <div id="formFields" class="form-grid"></div>
+      <footer class="dialog-actions">
+        <button class="ghost" value="cancel" type="submit">Annuleren</button>
+        <button id="saveRecord" value="default" type="submit">Opslaan</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script type="module" src="./src/app.mjs"></script>
+</body>
+</html>
