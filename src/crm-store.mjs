@@ -184,7 +184,8 @@ export function importData(json) {
 }
 
 export function seedDemoData(store) {
-  if (store.data.contacts.length > 0) return;
+  if (store.data.contacts.length > 0 && !isDemoDataset(store.data)) return;
+  if (store.data.contacts.length > 0) store.data = createEmptyData();
 
   const april = '2026-04-18T09:30:00.000Z';
   const may = '2026-05-22T10:15:00.000Z';
@@ -239,6 +240,8 @@ export function seedDemoData(store) {
   createRecord(store, 'documents', { created_at: may, updated_at: may, document_type: 'verkoopfactuur', name: 'Eindfactuur BMW 530e Touring', status: 'goedgekeurd', linked_entity_type: 'importCase', linked_entity_id: bmwCase.id, received_at: '2026-05-28' });
   createRecord(store, 'documents', { created_at: june, updated_at: june, document_type: 'keuring', name: 'Keuringsbewijs Mercedes Vito', status: 'goedgekeurd', linked_entity_type: 'importCase', linked_entity_id: vitoCase.id, received_at: '2026-06-27' });
   createRecord(store, 'documents', { created_at: june, updated_at: june, document_type: 'inschrijving', name: 'Inschrijving Orion Vito Tourer', status: 'ontvangen', linked_entity_type: 'importCase', linked_entity_id: vitoCase.id, received_at: '2026-06-28' });
+  store.data.settings.demoDataVersion = '2026-q2-profit';
+  save(store);
 }
 
 function withDefaults(collection, record) {
@@ -269,6 +272,13 @@ function buildDisplayName(record) {
 
 function text(value) { return String(value ?? '').trim(); }
 function active(items) { return items.filter(item => !item.is_archived); }
+function isDemoDataset(data) {
+  if (data.settings?.demoDataVersion) return true;
+  const demoNames = new Set(['Jan Peeters', 'Sara De Smet', 'GreenFleet BV', 'Sofie Van den Broeck', 'Niels Verhoeven', 'Orion Facility Services BV']);
+  const knownDemoContact = (data.contacts || []).some(contact => demoNames.has(contact.display_name || contact.company_name || [contact.first_name, contact.last_name].filter(Boolean).join(' ')));
+  const allIdsLookDemo = COLLECTIONS.flatMap(collection => data[collection] || []).every(record => String(record.id || '').includes('_demo_'));
+  return knownDemoContact || allIdsLookDemo;
+}
 function addDaysIso(days) { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
 function assertCollection(collection) { if (!COLLECTIONS.includes(collection)) throw new Error(`Onbekende collectie: ${collection}`); }
 function save(store) { if (typeof store.persist === 'function') store.persist(store.data); }

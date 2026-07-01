@@ -436,6 +436,7 @@
   ],
   "settings": {
     "owner": "MVP gebruiker",
-    "lastExportAt": null
+    "lastExportAt": null,
+    "demoDataVersion": "2026-q2-profit"
   }
 }
