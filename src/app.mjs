@@ -90,9 +90,11 @@ function renderDashboard() {
   const overdue = openTasks.filter(t => t.due_date && t.due_date < today());
   const blockedCases = active('importCases').filter(d => ['on_hold', 'geannuleerd'].includes(d.status) || d.risk_level === 'hoog');
   const docIssues = active('documents').filter(d => ['ontbreekt', 'te_controleren', 'probleem'].includes(d.status));
+  const totalProfit = active('importCases').reduce((sum, dossier) => sum + Number(dossier.profit_amount || 0), 0);
   view.innerHTML = `
     <div class="page-header"><div><h1>Dashboard</h1><p>Dagelijkse cockpit voor leads, dossiers, taken en ontbrekende documenten.</p></div><button data-new="contacts">+ Nieuwe lead</button></div>
     <section class="kpis">
+      ${kpi(euro(totalProfit), 'Winst laatste 3 maanden')}
       ${kpi(active('importCases').length, 'Actieve dossiers')}
       ${kpi(openTasks.length, 'Open taken')}
       ${kpi(overdue.length, 'Achterstallig')}
@@ -211,7 +213,7 @@ function submitForm(event) {
   if (event.submitter?.value === 'cancel') return dialog.close();
   const { collection, id } = state.edit;
   const values = Object.fromEntries(new FormData(form).entries());
-  Object.keys(values).forEach(k => { if (values[k] === '') delete values[k]; else if (['budget_min','budget_max','year','mileage_km','asking_price','estimated_extra_costs'].includes(k)) values[k] = Number(values[k]); });
+  Object.keys(values).forEach(k => { if (values[k] === '') delete values[k]; else if (['budget_min','budget_max','year','mileage_km','asking_price','estimated_extra_costs','purchase_price','sale_price','total_costs','service_fee','profit_amount'].includes(k)) values[k] = Number(values[k]); });
   try {
     if (collection === 'notes' && values.follow_up === 'on') addNoteWithOptionalTask(store, { ...values, follow_up: true });
     else if (id) updateRecord(store, collection, id, values);
@@ -223,7 +225,7 @@ function submitForm(event) {
 function formSchema(collection) {
   const contacts = [['contact_type','Type','select',['lead','prospect','klant','oud_klant','bedrijf']],['status','Status','select',STATUS_OPTIONS.contacts],['first_name','Voornaam'],['last_name','Achternaam'],['company_name','Bedrijf'],['email','E-mail','email'],['phone','Telefoon'],['preferred_channel','Voorkeurskanaal','select',['phone','email','whatsapp','sms','none']],['lead_source','Leadbron'],['budget_min','Budget min','number'],['budget_max','Budget max','number'],['desired_brand','Gewenst merk'],['desired_model','Gewenst model'],['general_notes','Algemene notities','textarea']];
   const vehicles = [['status','Status','select',STATUS_OPTIONS.vehicles],['contact_id','Klant','selectRef','contacts'],['import_case_id','Dossier','selectRef','importCases'],['seller_partner_id','Verkoper/partner','selectRef','partners'],['brand','Merk'],['model','Model'],['version','Uitvoering'],['year','Bouwjaar','number'],['mileage_km','Km-stand','number'],['fuel_type','Brandstof'],['transmission','Transmissie','select',['manueel','automaat']],['asking_price','Vraagprijs','number'],['estimated_extra_costs','Extra kosten','number'],['location_city','Locatie stad'],['advertisement_url','Advertentielink','url'],['notes_summary','Samenvatting','textarea']];
-  const importCases = [['status','Status','select',STATUS_OPTIONS.importCases],['contact_id','Klant','selectRef','contacts'],['vehicle_id','Voertuig','selectRef','vehicles'],['seller_partner_id','Verkoper/partner','selectRef','partners'],['title','Titel'],['case_number','Dossiernummer'],['risk_level','Risico','select',['laag','normaal','hoog']],['target_delivery_date','Geplande aflevering','date'],['summary','Samenvatting','textarea']];
+  const importCases = [['status','Status','select',STATUS_OPTIONS.importCases],['contact_id','Klant','selectRef','contacts'],['vehicle_id','Voertuig','selectRef','vehicles'],['seller_partner_id','Verkoper/partner','selectRef','partners'],['title','Titel'],['case_number','Dossiernummer'],['risk_level','Risico','select',['laag','normaal','hoog']],['target_delivery_date','Geplande aflevering','date'],['purchase_price','Aankoopprijs','number'],['sale_price','Verkoopprijs','number'],['total_costs','Totale kosten','number'],['service_fee','Service fee','number'],['profit_amount','Winst','number'],['profit_booked_at','Winst geboekt op','date'],['summary','Samenvatting','textarea']];
   const tasks = [['title','Titel'],['status','Status','select',STATUS_OPTIONS.tasks],['priority','Prioriteit','select',['laag','normaal','hoog','urgent']],['due_date','Deadline','date'],['linked_entity_type','Gekoppeld type','select',['contact','vehicle','importCase','partner']],['linked_entity_id','Gekoppeld ID'],['description','Beschrijving','textarea']];
   const notes = [['subject','Onderwerp'],['body','Inhoud','textarea'],['linked_entity_type','Gekoppeld type','select',['contact','vehicle','importCase','partner']],['linked_entity_id','Gekoppeld ID'],['follow_up','Maak opvolgtaak','checkbox'],['follow_up_title','Titel opvolgtaak'],['follow_up_due_date','Deadline opvolgtaak','date']];
   const documents = [['document_type','Documenttype'],['name','Naam'],['status','Status','select',STATUS_OPTIONS.documents],['linked_entity_type','Gekoppeld type','select',['contact','vehicle','importCase','partner']],['linked_entity_id','Gekoppeld ID'],['url_or_path','Link/pad'],['received_at','Ontvangen op','date'],['notes','Opmerking','textarea']];
@@ -243,8 +245,8 @@ function renderField([name, label, type = 'text', options], record) {
 
 function tableHead(c) { return `<tr>${columns(c).map(x => `<th>${x[1]}</th>`).join('')}<th>Acties</th></tr>`; }
 function tableRow(c, r) { return `<tr>${columns(c).map(([k]) => `<td>${cell(c,k,r)}</td>`).join('')}<td><div class="actions"><button class="small" data-open="${c}:${r.id}">Bekijk</button><button class="small ghost" data-edit="${c}:${r.id}">Bewerk</button><button class="small danger" data-archive="${c}:${r.id}">Archiveer</button></div></td></tr>`; }
-function columns(c) { return ({ contacts:[['display_name','Naam'],['status','Status'],['email','E-mail'],['phone','Telefoon'],['desired_brand','Wens']], vehicles:[['brand','Merk'],['model','Model'],['status','Status'],['year','Jaar'],['asking_price','Prijs']], importCases:[['case_number','Nr'],['title','Titel'],['status','Status'],['contact_id','Klant'],['vehicle_id','Voertuig']], tasks:[['title','Titel'],['status','Status'],['priority','Prio'],['due_date','Deadline'],['linked_entity_type','Koppeling']], documents:[['name','Naam'],['document_type','Type'],['status','Status'],['linked_entity_type','Koppeling']], notes:[['subject','Onderwerp'],['linked_entity_type','Koppeling'],['updated_at','Datum']], partners:[['name','Naam'],['category','Categorie'],['status','Status'],['city','Stad'],['country','Land']] })[c] || []; }
-function cell(c,k,r) { if (k === 'status') return statusBadge(r[k]); if (k.endsWith('_id')) return linkedName(k, r[k]); if (k.includes('price')) return euro(r[k]); if (k.includes('_at')) return dateTime(r[k]); return esc(r[k] ?? ''); }
+function columns(c) { return ({ contacts:[['display_name','Naam'],['status','Status'],['email','E-mail'],['phone','Telefoon'],['desired_brand','Wens']], vehicles:[['brand','Merk'],['model','Model'],['status','Status'],['year','Jaar'],['asking_price','Prijs']], importCases:[['case_number','Nr'],['title','Titel'],['status','Status'],['contact_id','Klant'],['profit_amount','Winst']], tasks:[['title','Titel'],['status','Status'],['priority','Prio'],['due_date','Deadline'],['linked_entity_type','Koppeling']], documents:[['name','Naam'],['document_type','Type'],['status','Status'],['linked_entity_type','Koppeling']], notes:[['subject','Onderwerp'],['linked_entity_type','Koppeling'],['updated_at','Datum']], partners:[['name','Naam'],['category','Categorie'],['status','Status'],['city','Stad'],['country','Land']] })[c] || []; }
+function cell(c,k,r) { if (k === 'status') return statusBadge(r[k]); if (k.endsWith('_id')) return linkedName(k, r[k]); if (moneyField(k)) return euro(r[k]); if (k.includes('_at')) return dateTime(r[k]); return esc(r[k] ?? ''); }
 function linkedName(k, id) { if (!id) return ''; const map = { contact_id:'contacts', vehicle_id:'vehicles', import_case_id:'importCases', seller_partner_id:'partners' }; try { const c = map[k]; return c ? `<button class="ghost small" data-open="${c}:${id}">${esc(displayValue(c, findRecord(store,c,id)))}</button>` : esc(id); } catch { return esc(id); } }
 
 function kpi(n, label) { return `<div class="kpi"><strong>${n}</strong><span>${label}</span></div>`; }
@@ -283,9 +285,10 @@ function statusOptions(c) { return STATUS_OPTIONS[c] || []; }
 function statusBadge(s) { return s ? `<span class="status ${esc(s)}">${esc(s)}</span>` : ''; }
 function tabLabel(t) { return ({ overview:'Overzicht', tasks:'Taken', notes:'Notities', documents:'Documenten', status:'Statusflow' })[t] || t; }
 function linkTo(c,id,label) { try { const r = findRecord(store,c,id); return `<span class="muted">${label}</span><br><button class="ghost small" data-open="${c}:${id}">${esc(displayValue(c,r))}</button>`; } catch { return ''; } }
-function formatValue(k,v) { if (v == null || v === '') return '<span class="muted">—</span>'; if (k.endsWith('_id')) return linkedName(k,v); if (k.includes('price') || k.includes('budget')) return euro(v); if (k.includes('_at') || k.includes('date')) return dateTime(v); if (String(v).startsWith('http')) return `<a href="${esc(v)}" target="_blank" rel="noreferrer">${esc(v)}</a>`; return esc(v); }
+function formatValue(k,v) { if (v == null || v === '') return '<span class="muted">—</span>'; if (k.endsWith('_id')) return linkedName(k,v); if (moneyField(k)) return euro(v); if (k.includes('_at') || k.includes('date')) return dateTime(v); if (String(v).startsWith('http')) return `<a href="${esc(v)}" target="_blank" rel="noreferrer">${esc(v)}</a>`; return esc(v); }
+function moneyField(k) { return k.includes('price') || k.includes('budget') || k.includes('cost') || k.includes('fee') || k.includes('profit'); }
 function esc(v) { return String(v ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
-function euro(v) { return v ? new Intl.NumberFormat('nl-BE', { style:'currency', currency:'EUR' }).format(v) : ''; }
+function euro(v) { return v === undefined || v === null || v === '' ? '' : new Intl.NumberFormat('nl-BE', { style:'currency', currency:'EUR' }).format(v); }
 function dateTime(v) { return v ? new Date(v).toLocaleString('nl-BE') : ''; }
 function today() { return new Date().toISOString().slice(0,10); }
 function byDueDate(a,b) { return String(a.due_date || '9999').localeCompare(String(b.due_date || '9999')); }

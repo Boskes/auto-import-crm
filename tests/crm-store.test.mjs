@@ -159,9 +159,12 @@ test('demo seed data contains representative auto-import CRM scenarios', () => {
   assert.equal(store.data.notes.length, 3);
   assert.equal(store.data.documents.length, 4);
   assert.equal(store.data.partners.length, 3);
-  assert.equal(store.data.statusHistory.length, 2);
-  assert.ok(store.data.importCases.some(item => item.status === 'transport'));
-  assert.ok(store.data.importCases.some(item => item.status === 'keuring'));
+  assert.equal(store.data.statusHistory.length, 3);
+  assert.equal(store.data.importCases.reduce((sum, item) => sum + item.profit_amount, 0), 42850);
+  assert.deepEqual(store.data.importCases.map(item => item.profit_booked_at.slice(0, 7)), ['2026-04', '2026-05', '2026-06']);
+  assert.ok(store.data.importCases.some(item => item.status === 'nazorg'));
+  assert.ok(store.data.importCases.some(item => item.status === 'aflevering'));
+  assert.ok(store.data.importCases.some(item => item.status === 'inschrijving'));
   assert.ok(store.data.tasks.some(item => item.status === 'afgerond'));
 
   const seededAgainCount = store.data.contacts.length;
