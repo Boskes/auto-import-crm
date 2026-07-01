@@ -152,19 +152,23 @@ test('demo seed data contains representative auto-import CRM scenarios', () => {
 
   seedDemoData(store);
 
-  assert.equal(store.data.contacts.length, 3);
-  assert.equal(store.data.vehicles.length, 3);
-  assert.equal(store.data.importCases.length, 3);
-  assert.equal(store.data.tasks.length, 5);
-  assert.equal(store.data.notes.length, 3);
-  assert.equal(store.data.documents.length, 4);
+  assert.equal(store.data.contacts.length, 8);
+  assert.equal(store.data.vehicles.length, 8);
+  assert.equal(store.data.importCases.length, 8);
+  assert.equal(store.data.tasks.length, 10);
+  assert.equal(store.data.notes.length, 8);
+  assert.equal(store.data.documents.length, 9);
   assert.equal(store.data.partners.length, 3);
-  assert.equal(store.data.statusHistory.length, 3);
-  assert.equal(store.data.importCases.reduce((sum, item) => sum + item.profit_amount, 0), 42850);
-  assert.deepEqual(store.data.importCases.map(item => item.profit_booked_at.slice(0, 7)), ['2026-04', '2026-05', '2026-06']);
+  assert.equal(store.data.statusHistory.length, 8);
+  assert.equal(store.data.importCases.reduce((sum, item) => sum + item.profit_amount, 0), 53850);
+  assert.ok(store.data.importCases.every(item => item.profit_amount >= 3000 && item.profit_amount <= 8000));
+  assert.deepEqual(store.data.importCases.map(item => item.profit_booked_at.slice(0, 7)), ['2026-04', '2026-05', '2026-06', '2026-06', '2026-06', '2026-06', '2026-06', '2026-06']);
+  assert.deepEqual(store.data.importCases.filter(item => ['AU', 'CN', 'JP'].includes(item.destination_country)).map(item => item.destination_country).sort(), ['AU', 'CN', 'JP']);
   assert.ok(store.data.importCases.some(item => item.status === 'nazorg'));
   assert.ok(store.data.importCases.some(item => item.status === 'aflevering'));
   assert.ok(store.data.importCases.some(item => item.status === 'inschrijving'));
+  assert.ok(store.data.importCases.some(item => item.status === 'transport'));
+  assert.ok(store.data.importCases.some(item => item.status === 'keuring'));
   assert.ok(store.data.tasks.some(item => item.status === 'afgerond'));
 
   const seededAgainCount = store.data.contacts.length;

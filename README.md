@@ -27,7 +27,7 @@ Er zijn twee opties:
 1. Klik in de app op `Demo data`.
 2. Importeer het JSON-bestand `demo-data/auto-import-crm-demo-data.json` via `Import/export`.
 
-De demo-set bevat recente gegevens uit april, mei en juni 2026: 3 klanten/leads, 3 voertuigen, 3 importdossiers, 5 taken, 4 documenten, 3 notities, 3 partners en 3 statusgeschiedenisregels. De drie importdossiers tellen samen op tot EUR 42.850 winst.
+De demo-set bevat recente gegevens uit april, mei en juni 2026: 8 klanten/leads, 8 voertuigen, 8 importdossiers, 10 taken, 9 documenten, 8 notities, 3 partners en 8 statusgeschiedenisregels. De dossiers bevatten ook exportcases vanuit Duitsland naar Japan, China en Australie. De acht voertuigen tellen samen op tot EUR 53.850 winst, met per voertuig een winst tussen EUR 3.000 en EUR 8.000.
 
 ## Functionaliteit in scope
 
